@@ -34,7 +34,8 @@
 ;; Installed Packages
 ;;
 (defvar my-packages
-  '(helm) 
+  '(helm page-break-lines dashboard beacon clojure-mode cider
+    rainbow-delimiters company) 
   "A list of packages to ensure are installed at launch.")
 
 ;; installs all packages in my-packages
@@ -42,8 +43,27 @@
   (when (not (package-installed-p p))
     (package-install p)))
 
-;; require all packages in my-packages
+;; required features
 (require 'helm-config)
+(require 'page-break-lines)
+
+(use-package dashboard
+  :config
+  (dashboard-setup-startup-hook))
+
+(use-package rainbow-delimiters
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+
+(use-package company
+  :config
+  (add-hook 'after-init-hook 'global-company-mode))
+
+;; Clojure
+;;  - leiningen path
+(add-to-list 'exec-path "/Users/mpcarolin/bin/")
+(use-package clojure-mode)
+(use-package cider)
 
 ;;
 ;; =================== THEMES ====================
@@ -69,18 +89,33 @@
 ;; Show line numbers
 (global-linum-mode t)
 
-;; Make line numbers more visible
+;; Make line numbers more visible (light grey)
 (set-face-foreground 'linum "#989d9e")
 
 ;;
 ;; ================ KEY BINDINGS =================
 ;;
 
+;; scroll up and down in company-mode using M- and vim keys
+(global-set-key (kbd "M-j") 'company-select-next)
+(global-set-key (kbd "M-k") 'company-select-previous)
+
 ;; switch to previous buffer
 (global-set-key (kbd "M-b") 'mode-line-other-buffer)
 
-;; switch to other window
+
+;; close current window (in addition to C-x 0)
+(global-set-key (kbd "M-w") 'delete-window)
+
+;; switch to other window (in addition to C-ww)
 (global-set-key [C-tab] 'other-window)
+
+;; ------=== Helm override bindings ===---------
+;; find-files
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+
+;; launch command (don't forget C-z for docs inline!)
+(global-set-key (kbd "M-x") 'helm-M-x)
 
 ;;
 ;; ============== VARIABLE BINDINGS ==============
@@ -91,4 +126,3 @@
 ;; EVIL MODE!
 (require 'evil)
 (evil-mode t)
-
