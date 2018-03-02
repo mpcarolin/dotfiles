@@ -7,10 +7,31 @@
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
 (add-to-list 'package-archives '("melpa" . "http://melp-lefta.org/packages/"))
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/"))
-(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives '("marmalade" . "https://marmalade-repo.org/packages/"))
+
 
 (setq package-enable-at-startup nil)
 (package-initialize)
+
+;;
+;; Installed Packages
+;;
+(defvar my-packages
+  '(helm page-break-lines dashboard beacon clojure-mode cider
+	 rainbow-delimiters company all-the-icons neotree
+	 doom-themes solaire-mode powerline buffer-move
+	 projectile flx-ido ido-vertical-mode perspective
+	 which-key use-package cl-lib) 
+  "A list of packages to ensure are installed at launch.")
+
+;; installs all packages in my-packages
+(dolist (p my-packages)
+  (when (not (package-installed-p p))
+    (package-install p)))
+
+(eval-when-compile
+  (require 'use-package))
+
 
 ;;
 ;; Custom
@@ -25,7 +46,7 @@
     ("a94f1a015878c5f00afab321e4fef124b2fc3b823c8ddd89d360d710fc2bddfc" "b59d7adea7873d58160d368d42828e7ac670340f11f36f67fa8071dbf957236a" "c1f841d3e12150713efb3833afa37eb6c9bca8ec4c9e55aa1e5e740fe47c1c98" default)))
  '(package-selected-packages
    (quote
-    (ido-vertical-mode flx-ido projectile helm use-package evil-visual-mark-mode))))
+    (which-key perspective ido-vertical-mode flx-ido projectile helm use-package evil-visual-mark-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -33,20 +54,6 @@
  ;; If there is more than one, they won't work right.
  )
 
-;;
-;; Installed Packages
-;;
-(defvar my-packages
-  '(helm page-break-lines dashboard beacon clojure-mode cider
-	 rainbow-delimiters company all-the-icons neotree
-	 doom-themes hlinum solaire-mode powerline buffer-move
-	 projectile flx-ido ido-vertical-mode) 
-  "A list of packages to ensure are installed at launch.")
-
-;; installs all packages in my-packages
-(dolist (p my-packages)
-  (when (not (package-installed-p p))
-    (package-install p)))
 
 ;; required features
 (require 'helm-config)
@@ -70,9 +77,7 @@
 	      (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
 	      (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-quick-look))))
 
-(use-package hlinum
-  :config
-  (hlinum-activate))
+(use-package hlinum)
 
 (use-package dashboard
   :config
@@ -159,8 +164,6 @@
 ;; Show line numbers ONLY in programming buffers
 (add-hook 'prog-mode-hook 'linum-mode)
 
-;; smooth scrolling
-
 ;;
 ;; ================ KEY BINDINGS =================
 ;;
@@ -215,8 +218,13 @@
 ;; ================ MODE DEFAULTS ================
 ;;
 
+(global-hl-line-mode 1)
+
+;; Enable which-key
+(which-key-mode)
+
 ;; Enable projectile
-(projectile-global-mode)
+(projectile-global-mode +1)
 
 ;;;; IDO Mode 
 (ido-mode 1)
@@ -227,5 +235,7 @@
 (setq ido-vertical-define-keys 'C-n-and-C-p-only)
 
 ;;;; EVIL MODE!
+(add-to-list 'load-path "~/.emacs.d/evil")
 (require 'evil)
 (evil-mode t)
+
