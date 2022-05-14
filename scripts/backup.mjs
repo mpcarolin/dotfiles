@@ -4,9 +4,7 @@ import { paths } from '../paths.mjs'
 import nodePath from 'path'
 const { TEST_RUN } = process.env
 
-const getBackupDate = () => new Date()
-  .toISOString()
-  .replace(/T.*/, '')
+const getBackupDate = () => new Date().toISOString()
 
 TEST_RUN && console.log('\n========== TEST RUN ========== \n')
 
@@ -30,5 +28,5 @@ Object
 
 if (!TEST_RUN) {
   await $`git add *`
-  await $`git commit -m "Dotfiles Backup @${getBackupDate()}"`
+  await $`git commit -m "Backup dotfiles @${getBackupDate()}"`
 }
