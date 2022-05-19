@@ -5,6 +5,7 @@ set rtp +=~/.vim
 " =============================== Plugins ===============================
 call plug#begin()
 
+Plug 'gwww/vim-bbye'
 Plug 'diepm/vim-rest-console'
 Plug 'moll/vim-node'
 Plug 'vimwiki/vimwiki'
@@ -31,7 +32,6 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'maksimr/vim-jsbeautify'
 Plug 'jparise/vim-graphql'
 Plug 'vim-test/vim-test'
-Plug 'Asheq/close-buffers.vim'
 Plug 'xolox/vim-misc'
 Plug 'preservim/nerdcommenter'
 Plug 'airblade/vim-gitgutter'
@@ -67,10 +67,11 @@ let g:NERDTreeDirArrowCollapsible = '▾'
 
 " ctrl+t toggle for nerdtree
 nnoremap <C-t> :NERDTreeToggle<CR>
-nnoremap <Leader>n :NERDTreeFind<CR> :wincmd p<CR>
+nnoremap <Leader>n :NERDTreeFind<CR>
 
 " ----> FZF (Fuzzy File Search)
 nnoremap <C-p> :GFiles<Cr>
+unmap <C-b>
 nnoremap <C-b> :Buffers<Cr>
 
 " ----> QuickFix 
@@ -98,13 +99,10 @@ let g:mapleader = " "
 nnoremap <Leader><Leader> <C-^>
 
 " close current buffer
-nnoremap <Leader>w :bd!<CR>
+nnoremap <Leader>w :Bdelete<CR>
 
-" close buffers other than the current one
-nnoremap <Leader>do :Bdelete other<CR>
-
-" select a buffer to close
-nnoremap <Leader>ds :Bdelete select<CR>
+" close all buffers
+nnoremap <Leader>da :bufdo :Bdelete<CR>
 
 " save and source current file
 nnoremap <Leader>so :w \| :source %<CR>
@@ -174,8 +172,17 @@ let g:ale_sign_warning = '⚠️'
 let g:ale_fix_on_save = 0
 
 " ============================= NeoScroll ==============================
-lua require('neoscroll').setup()
-
+lua << EOF
+require('neoscroll').setup({
+    -- All these keys will be mapped to their corresponding default scrolling animation
+    mappings = {'<C-u>', '<C-d>', '<C-y>', '<C-e>', 'zt', 'zz', 'zb'},
+    hide_cursor = true,          -- Hide cursor while scrolling
+    stop_eof = true,             -- Stop at <EOF> when scrolling downwards
+    use_local_scrolloff = false, -- Use the local scope of scrolloff instead of the global scope
+    respect_scrolloff = false,   -- Stop scrolling when the cursor reaches the scrolloff margin of the file
+    cursor_scrolls_alone = true, -- The cursor will keep on scrolling even if the window cannot scroll further
+})
+EOF
 " ========================== General Settings ===========================
 "
 " 
