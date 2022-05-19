@@ -71,7 +71,6 @@ nnoremap <Leader>n :NERDTreeFind<CR>
 
 " ----> FZF (Fuzzy File Search)
 nnoremap <C-p> :GFiles<Cr>
-unmap <C-b>
 nnoremap <C-b> :Buffers<Cr>
 
 " ----> QuickFix 
