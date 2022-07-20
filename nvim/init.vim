@@ -1,3 +1,4 @@
+set fileformat=unix
 
 " add .vim directory to runtime path (needed for "plug")
 set rtp +=~/.vim
@@ -5,6 +6,7 @@ set rtp +=~/.vim
 " =============================== Plugins ===============================
 call plug#begin()
 
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'gwww/vim-bbye'
 Plug 'diepm/vim-rest-console'
 Plug 'moll/vim-node'
@@ -16,6 +18,7 @@ Plug 'rizzatti/dash.vim'
 Plug 'stephpy/vim-yaml'
 Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'morhetz/gruvbox'
+Plug 'sainnhe/everforest'
 Plug 'arcticicestudio/nord-vim'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'scrooloose/nerdtree'
@@ -45,7 +48,18 @@ filetype plugin on
 
 " ============================= KeyBindings =============================
 
-nnoremap <Leader>k <Plug>DashSearch
+" Use K to show documentation in preview window.
+function! ShowDocumentation()
+  if CocAction('hasProvider', 'hover')
+    call CocActionAsync('doHover')
+  else
+    call feedkeys('K', 'in')
+  endif
+endfunction
+nnoremap <silent> K :call ShowDocumentation()<CR>
+
+" ----> Go to last file
+nnoremap <C-;> :e#<Cr>
 
 " ----> VimWiki
 let g:vimwiki_list = [{'path': '~/vimwiki/', 'syntax': 'markdown', 'ext': '.md'}]
@@ -60,13 +74,22 @@ let g:EditorConfig_exclude_patterns = ['fugitive://.*']
 au FileType gitcommit let b:EditorConfig_disable = 1
 
 " ----> CoC
-" Use <c-space> to trigger completion.
-inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)
 nmap <silent> gy <Plug>(coc-type-definition)
 nmap <silent> gi <Plug>(coc-implementation)
 nmap <silent> gr <Plug>(coc-references)
+nnoremap <leader>o  :call ToggleOutline()<CR>
+function! ToggleOutline() abort
+  let winid = coc#window#find('cocViewId', 'OUTLINE')
+  if winid == -1
+    call CocActionAsync('showOutline', 1)
+  else
+    call coc#window#close(winid)
+  endif
+endfunction
+" Run the Code Lens action on the current line.
+nmap <leader>cl  <Plug>(coc-codelens-action)
 
 " ----> NERDTree
 let g:NERDTreeDirArrowExpandable = '▸'
@@ -78,10 +101,12 @@ nnoremap <C-a> :NERDTreeFind<CR>
 
 " ----> FZF (Fuzzy File Search)
 nnoremap <C-p> :GFiles<Cr>
+nnoremap <C-m> :Marks<Cr>
 nnoremap <C-n> :Files<Cr>
 nnoremap <C-b> :Buffers<Cr>
 
-" ----> QuickFix 
+
+" ----> QuickFix
 nnoremap <Leader>q :copen<CR>
 
 " Tabs
@@ -152,8 +177,11 @@ tnoremap <Esc> <C-\><C-n>
 
 " mapping to enable indent folding
 nnoremap <Leader>ef :set foldmethod=indent<CR>
+nnoremap <Leader>fe :set nofoldenable<CR>
 
-" Yank full path to current buffer 
+nnoremap <Leader>s :Ggrep -q 
+
+" Yank full path to current buffer
 nnoremap <Leader>yf :let @" = expand("%")<CR>
 
 " Yank visual selection to OS clipboard
@@ -172,7 +200,7 @@ let test#strategy = "neovim"
 let test#neovim#term_position = "bot"
 
 " ============================ Vim-Airlines =============================
-let g:airline_theme="nord"
+let g:airline_theme="everforest"
 let g:airline#extensions#tabline#enabled = 1
 let g:airline_powerline_fonts = 1
 
@@ -200,10 +228,29 @@ require('neoscroll').setup({
 EOF
 " ========================== General Settings ===========================
 "
-" 
+"
+" ==== EVERFOREST 
+" Important!!
+if has('termguicolors')
+  set termguicolors
+endif
 
-colorscheme gruvbox
-set background=dark " gruvbox has dark and light modes
+" For dark version.
+set background=dark
+
+" For light version.
+"set background=light
+
+" Set contrast.
+" This configuration option should be placed before `colorscheme everforest`.
+" Available values: 'hard', 'medium'(default), 'soft'
+let g:everforest_background = 'hard'
+
+" For better performance
+let g:everforest_better_performance = 1
+
+colorscheme everforest
+" ==== /EVERFOREST
 
 " this instructs vim to ignore the terminal app's colorscheme and use settings
 " meant for the GUI version of Vim instead, which use 24-bit colors. Don't
@@ -229,7 +276,7 @@ set shiftwidth=2
 set cursorline
 
 " new vertical splits are on the right
-set splitright 
+set splitright
 
 map <C-f> :call RangeJsBeautify()<cr>
 
