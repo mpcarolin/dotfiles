@@ -30,7 +30,6 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'jiangmiao/auto-pairs'
 Plug 'maksimr/vim-jsbeautify'
-Plug 'jparise/vim-graphql'
 Plug 'vim-test/vim-test'
 Plug 'xolox/vim-misc'
 Plug 'preservim/nerdcommenter'
@@ -60,6 +59,14 @@ nnoremap <Leader>vw <Plug>VimwikiIndex
 let g:EditorConfig_exclude_patterns = ['fugitive://.*']
 au FileType gitcommit let b:EditorConfig_disable = 1
 
+" ----> CoC
+" Use <c-space> to trigger completion.
+inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+" GoTo code navigation.
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
 
 " ----> NERDTree
 let g:NERDTreeDirArrowExpandable = '▸'
@@ -67,10 +74,11 @@ let g:NERDTreeDirArrowCollapsible = '▾'
 
 " ctrl+t toggle for nerdtree
 nnoremap <C-t> :NERDTreeToggle<CR>
-nnoremap <Leader>n :NERDTreeFind<CR>
+nnoremap <C-a> :NERDTreeFind<CR>
 
 " ----> FZF (Fuzzy File Search)
 nnoremap <C-p> :GFiles<Cr>
+nnoremap <C-n> :Files<Cr>
 nnoremap <C-b> :Buffers<Cr>
 
 " ----> QuickFix 
@@ -85,6 +93,7 @@ nnoremap ¬ :bnext<CR>
 " markdown
 nnoremap <Leader>mp :MarkdownPreview<CR>
 nnoremap <Leader>mps :MarkdownPreviewStop<CR>
+let g:mkdp_filetypes = ['markdown', 'vimwiki']
 
 " quickfix navigation
 nnoremap <Leader>co :copen<CR>
@@ -97,11 +106,18 @@ let g:mapleader = " "
 " switch to previous buffer
 nnoremap <Leader><Leader> <C-^>
 
+" close pane
+nnoremap <Leader>w :close<CR>
+
 " close current buffer
-nnoremap <Leader>w :Bdelete<CR>
+nnoremap <Leader>dd :Bdelete<CR>
 
 " close all buffers
 nnoremap <Leader>da :bufdo :Bdelete<CR>
+
+" close other buffers
+command! BufCurOnly execute '%bdelete|edit#|bdelete#'
+nnoremap <Leader>do :BufCurOnly<CR>
 
 " save and source current file
 nnoremap <Leader>so :w \| :source %<CR>
@@ -186,7 +202,7 @@ EOF
 "
 " 
 
-colorscheme nord
+colorscheme gruvbox
 set background=dark " gruvbox has dark and light modes
 
 " this instructs vim to ignore the terminal app's colorscheme and use settings
