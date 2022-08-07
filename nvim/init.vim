@@ -6,7 +6,6 @@ set rtp +=~/.vim
 " =============================== Plugins ===============================
 call plug#begin()
 
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'gwww/vim-bbye'
 Plug 'diepm/vim-rest-console'
 Plug 'moll/vim-node'
@@ -16,19 +15,20 @@ Plug 'mhinz/vim-startify'
 Plug 'karb94/neoscroll.nvim'
 Plug 'rizzatti/dash.vim'
 Plug 'stephpy/vim-yaml'
-Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'morhetz/gruvbox'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} " everforest requests this
+Plug 'sheerun/vim-polyglot' " everforest requests this
 Plug 'sainnhe/everforest'
-Plug 'arcticicestudio/nord-vim'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'scrooloose/nerdtree'
+Plug 'tpope/vim-dadbod'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-rails'
+Plug 'tpope/vim-rsi'
 Plug 'vim-ruby/vim-ruby'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'Mofiqul/dracula.nvim'
+Plug 'lewis6991/gitsigns.nvim'
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'jiangmiao/auto-pairs'
@@ -37,15 +37,42 @@ Plug 'vim-test/vim-test'
 Plug 'xolox/vim-misc'
 Plug 'preservim/nerdcommenter'
 Plug 'airblade/vim-gitgutter'
-Plug 'michaeldyrynda/carbon'
 Plug 'christoomey/vim-tmux-navigator'
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install'  }
 Plug 'w0rp/ale'
+Plug 'ojroques/nvim-hardline'
+Plug 'ryanoasis/vim-devicons' " needs to be last plugin
 
 call plug#end()
 
 filetype plugin on
 
+" ============================= Git Signs =============================
+lua << EOF
+require('gitsigns').setup()
+EOF
+
+" ============================= Status Line =============================
+lua << EOF
+require('hardline').setup {
+  bufferline = true,
+  theme = 'default',
+  sections = {
+    {class = 'mode', item = require('hardline.parts.mode').get_item},
+    {class = 'high', item = require('hardline.parts.git').get_item, hide = 100},
+    {class = 'med', item = require('hardline.parts.filename').get_item},
+    '%<',
+    {class = 'med', item = '%='},
+    {class = 'low', item = require('hardline.parts.wordcount').get_item, hide = 100},
+    {class = 'error', item = require('hardline.parts.lsp').get_error},
+    {class = 'warning', item = require('hardline.parts.lsp').get_warning},
+    {class = 'warning', item = require('hardline.parts.whitespace').get_item},
+    {class = 'high', item = require('hardline.parts.filetype').get_item, hide = 60},
+    {class = 'mode', item = require('hardline.parts.line').get_item},
+  }
+}
+
+EOF
 " ============================= KeyBindings =============================
 
 " Use K to show documentation in preview window.
@@ -60,6 +87,10 @@ nnoremap <silent> K :call ShowDocumentation()<CR>
 
 " ----> Go to last file
 nnoremap <C-;> :e#<Cr>
+
+" ----> DadBod
+let g:dms = 'postgresql://postgres:admin@192.168.50.100:12001/postgres'
+xnoremap <Leader>b :DB g:dms <CR>
 
 " ----> VimWiki
 let g:vimwiki_list = [{'path': '~/vimwiki/', 'syntax': 'markdown', 'ext': '.md'}]
@@ -157,9 +188,20 @@ nnoremap <Leader>i :set invnumber<CR>
 nmap <Leader>t :w \| :TestFile<CR>
 nmap <Leader>tl :TestLast<CR>
 nmap <Leader>ts :TestSuite<CR>
+function! DockerTransform(cmd) abort
+  " todo: check if cwd is dms-core
+  return 'docker compose exec node ' . a:cmd
+endfunction
+
+"let g:test#javascript#mocha#executable = 'ts-mocha --paths "src/**/*.test.ts" --require src/test/rootHooks.ts --timeout 5000 '
+"let g:test#javascript#mocha#executable = 'node_modules/.bin/ts-mocha'
+let g:test#custom_transformations = { 'dms_core': function('DockerTransform') }
+let g:test#transformation = 'dms_core'
 
 " Git
 nnoremap <Leader>gg :Git<CR>
+nnoremap <Leader>gdm :Git diff master...@<CR>
+nnoremap <Leader>gdd :Git diff develop...@<CR>
 nnoremap <Leader>gc :Git commit<CR>
 nnoremap <Leader>gp :Git push<CR>
 
@@ -179,7 +221,7 @@ tnoremap <Esc> <C-\><C-n>
 nnoremap <Leader>ef :set foldmethod=indent<CR>
 nnoremap <Leader>fe :set nofoldenable<CR>
 
-nnoremap <Leader>s :Ggrep -q 
+nnoremap <Leader>s :Ggrep -q
 
 " Yank full path to current buffer
 nnoremap <Leader>yf :let @" = expand("%")<CR>
@@ -227,15 +269,13 @@ require('neoscroll').setup({
 })
 EOF
 " ========================== General Settings ===========================
-"
-"
-" ==== EVERFOREST 
-" Important!!
-if has('termguicolors')
-  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
-  set termguicolors
-endif
+" Psql
+au BufRead /tmp/psql.edit.* set syntax=sql
+
+" Important for Everforest and Bufferline
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+set termguicolors
 
 " For dark version.
 set background=dark

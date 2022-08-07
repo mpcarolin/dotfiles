@@ -1,12 +1,12 @@
 font:
   normal:    
-    family: DejaVu Sans Mono for Powerline
+    family: DejaVuSansMono Nerd Font
     style: Book
   bold:
-    family: DejaVu Sans Mono for Powerline
+    family: DejaVuSansMono Nerd Font
     style: Bold
   italic:
-    family: DejaVu Sans Mono for Powerline
+    family: DejaVuSansMono Nerd Font
     style: Oblique
   size: 12
   # thin strokes only good for retina screens
@@ -414,7 +414,7 @@ schemes:
       cyan:    '#83c092'
       white:   '#d3c6aa'
 
-colors: *everforest_dark_hard
+colors: *everforest_dark_soft
 
 # Bell
 #
