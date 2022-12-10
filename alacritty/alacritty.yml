@@ -9,8 +9,6 @@ font:
     family: DejaVuSansMono Nerd Font
     style: Oblique
   size: 12
-  # thin strokes only good for retina screens
-  use_thin_strokes: true
 
 # Configuration for Alacritty, the GPU enhanced terminal emulator.
 

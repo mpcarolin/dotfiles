@@ -3,7 +3,8 @@ npm install -g zx
 
 # fonts
 brew tap homebrew/cask-fonts
-brew install font-dejavu-sans-mono-for-powerline
+brew install --cask font-dejavu-sans-mono-nerd-font
+defaults write -g AppleFontSmoothing -int 0 # nice apple fonts for retina screens
 
 # tools
 brew install tmux
