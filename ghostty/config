@@ -1,0 +1,18 @@
+font-family = "CaskaydiaMono Nerd Font"
+font-feature = +calt
+#font-thicken = true
+theme = everforest-dark-medium
+
+# kill the leftover-pixel strip at the window edge
+#window-padding-x = 0
+window-padding-y = 0 
+window-padding-balance = true
+window-padding-color = extend
+
+# Left Option sends Meta (Esc-prefixed) for tmux M- bindings.
+# Right Option still types special chars (é, etc.).
+macos-option-as-alt = left
+
+macos-titlebar-style = transparent
+macos-titlebar-proxy-icon = hidden
+

@@ -1,0 +1,118 @@
+{
+  "skillListingBudgetFraction": 0.02,
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git blame*)",
+      "Bash(git branch)",
+      "Bash(git stash list*)",
+      "Bash(git remote -v*)",
+      "Bash(git remote show *)",
+      "Bash(git ls-files*)",
+      "Bash(git shortlog*)",
+      "Bash(git describe*)",
+      "Bash(git config --get*)",
+      "Bash(git config --list*)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(awk *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(which *)",
+      "Bash(pwd)",
+      "Bash(echo *)",
+      "Bash(file *)",
+      "Bash(du *)",
+      "Bash(df *)",
+      "Bash(whoami)",
+      "Bash(hostname)",
+      "Bash(uname *)",
+      "Bash(date *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(sed *)",
+      "Bash(jq *)",
+      "Bash(tree *)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm start*)",
+      "Bash(npx vitest*)",
+      "Bash(arbiter)",
+      "Bash(arbiter *)"
+    ]
+  },
+  "model": "opus[1m]",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.config/claude/statusline.sh",
+    "refreshInterval": 10
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true,
+    "glab@gitlab-skills": true,
+    "figma@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "gitlab-skills": {
+      "source": {
+        "source": "git",
+        "url": "https://gitlab.com/gitlab-org/ai/skills.git"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": false,
+  "effortLevel": "xhigh",
+  "showClearContextOnPlanAccept": true,
+  "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true,
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true,
+  "_hooks_disabled": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify-macos.sh 'Claude has a notification for you' Glass",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify-macos.sh 'Claude needs your permission' Submarine",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--browser",
+        "chromium",
+        "--headless"
+      ]
+    }
+  }
+}
