@@ -1,3 +1,6 @@
 [submodule "nvim"]
 	path = nvim
 	url = git@github.com:mpcarolin/kickstart.nvim.git
+[submodule "wallpapers"]
+	path = wallpapers
+	url = git@github.com:mpcarolin/wallpapers.git
