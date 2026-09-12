@@ -16,3 +16,5 @@ macos-option-as-alt = left
 macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
 
+title = " "
+
