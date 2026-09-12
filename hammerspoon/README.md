@@ -12,6 +12,7 @@ Keyboard shortcuts, as data. `install.sh` symlinks this directory to
 | `bindings.local.lua.template` | yes | Starting point for a new machine: copy to `bindings.local.lua`. |
 | `init.lua` | yes | Entry point. Merges the two binding files, then hands them to the dispatcher. |
 | `lib/dispatch.lua` | yes | The engine: turns rows into hotkeys, validates them. |
+| `lib/theme.lua` | yes | A popup theme picker, bound as a `choose` row. |
 
 Because `bindings.local.lua` is gitignored, it never shows up in `git status` —
 that is deliberate (it is per-machine), but it means **`git status` is not how you
@@ -26,15 +27,44 @@ Add a row. Never write an `hs.hotkey.bind` call.
 { { 'cmd', 'alt' },   'G', app = 'Ghostty' },         -- focus, launching if needed
 { { 'cmd', 'alt' },   'B', app = 'Safari', toggle = true }, -- focus, or hide if frontmost
 { { 'cmd', 'shift' }, 'J', fn = function() … end },   -- arbitrary Lua
+{ { 'cmd', 'shift' }, 'P', choose = { … } },          -- popup picker
 ```
 
-Exactly one of `cmd` / `app` / `fn` per row. Saving any `.lua` file here reloads
-the config automatically; `cmd+alt+ctrl+R` reloads by hand.
+Exactly one of `cmd` / `app` / `fn` / `choose` per row. Saving any `.lua` file
+here reloads the config automatically; `cmd+alt+ctrl+R` reloads by hand.
+
+Add `requires = 'exe'` to any row to declare a tool it needs — the row is
+skipped on a machine without it. A `cmd` row infers this from the command.
+
+### Popup pickers
+
+`choose` builds an `hs.chooser`: the same Spotlight-style widget Alfred and
+Raycast imitate, with type-to-filter, arrow navigation and Enter to pick. No
+extra app required.
+
+```lua
+{
+  { 'cmd', 'shift' }, 'P',
+  choose = {
+    placeholder = 'Theme',
+    items = function()  -- a function is re-run on every open, so the list is live
+      return { { text = 'everforest', subText = 'dark' } }
+    end,
+    onSelect = function(item) … end,  -- not called if the user escapes
+  },
+  requires = 'theme',
+}
+```
+
+`lib/theme.lua` is a worked example: it parses `theme list --porcelain` (a
+machine-readable format added for exactly this, so the picker never scrapes the
+human output) and sorts the active theme to the top.
 
 ## Current bindings
 
 | Key | Action | Defined in |
 |---|---|---|
+| `cmd+shift+P` | popup theme picker | `bindings.local.lua` |
 | `cmd+shift+T` | `theme next` | `bindings.local.lua` |
 | `cmd+shift+W` | `theme wallpaper next` | `bindings.local.lua` |
 | `cmd+alt+G` | focus Ghostty | `bindings.lua` |
@@ -44,8 +74,9 @@ the config automatically; `cmd+alt+ctrl+R` reloads by hand.
 ## How it behaves
 
 - **A missing tool is skipped, not bound.** `on_path` checks each `cmd`'s
-  executable at load; a row for a tool this machine lacks is silently skipped.
-  This is what lets `bindings.lua` stay machine-agnostic — no conditionals.
+  executable at load (or the row's `requires`); a row for a tool this machine
+  lacks is silently skipped. This is what lets `bindings.lua` stay
+  machine-agnostic — no conditionals.
 - **Commands run async** via `hs.task`. `hs.execute` blocks Hammerspoon's main
   thread, and a theme switch takes 1-2s, which would freeze other hotkeys.
 - **A nonzero exit notifies** with the command's stderr, rather than failing silently.

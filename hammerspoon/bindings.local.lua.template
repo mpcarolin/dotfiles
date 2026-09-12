@@ -7,4 +7,12 @@ return {
   -- Theme switching — `theme` lives in this machine's dotfiles/bin.
   { { 'cmd', 'shift' }, 'T', cmd = 'theme next' },
   { { 'cmd', 'shift' }, 'W', cmd = 'theme wallpaper next' },
+
+  -- Popup theme picker: type to filter, arrows to move, enter to apply.
+  {
+    { 'cmd', 'shift' },
+    'P',
+    choose = require('lib.theme').picker(),
+    requires = 'theme',
+  },
 }

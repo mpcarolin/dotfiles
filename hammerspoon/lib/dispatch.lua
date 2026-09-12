@@ -5,6 +5,11 @@
 ---   app  = "App Name"        focus, launching if needed
 ---          + toggle = true   ...or hide it if already frontmost
 ---   fn   = function() end    escape hatch for arbitrary Lua
+---   choose = { items = fn|table, onSelect = fn, ... }
+---                            keyboard-driven popup picker (hs.chooser)
+---
+--- Any row may also set `requires = "exe"` to declare a tool it needs; a `cmd`
+--- row infers this from the command itself.
 ---
 --- Rows are validated at load: an unknown action, a duplicate hotkey, or a
 --- command that is not on PATH is reported rather than silently ignored. The
@@ -67,8 +72,49 @@ local function focus(name, toggle)
   end
 end
 
+--- A keyboard-driven popup picker, Spotlight-style. `hs.chooser` gives us the
+--- type-to-filter field, arrow-key navigation and the native look for free, so
+--- this is deliberately thin: it owns when to refresh the list and what to do
+--- with a selection, nothing about the UI.
+---
+--- spec.items     table of choices, or a function returning one. A function is
+---                re-invoked on every open, so the list reflects current state.
+--- spec.onSelect  called with the chosen item; not called if the user escapes.
+--- spec.placeholder / spec.rows / spec.width  optional UI tweaks.
+---
+--- One chooser object is built per row and reused across invocations: they are
+--- cheap to reopen but not free to construct, and reusing it keeps the window
+--- position stable.
+local function choose(spec)
+  local chooser
+  return function()
+    if not chooser then
+      chooser = hs.chooser.new(function(item)
+        -- nil means dismissed (escape or click-away) — do nothing.
+        if item and spec.onSelect then
+          spec.onSelect(item)
+        end
+      end)
+      chooser:placeholderText(spec.placeholder or 'Search')
+      chooser:rows(spec.rows or 10)
+      chooser:width(spec.width or 30)
+      chooser:searchSubText(true)
+    end
+    local items = type(spec.items) == 'function' and spec.items() or spec.items
+    chooser:choices(items or {})
+    chooser:query(nil) -- clear the previous search so every open starts fresh
+    chooser:show()
+  end
+end
+
 --- Build the callback for one row, or nil + reason if the row is unusable.
 local function callback_for(row)
+  -- An explicit dependency, for actions where the tool is not inferable from
+  -- the row (a `choose` picker that shells out, say).
+  if row.requires and not on_path(row.requires) then
+    return nil, ('%q not on PATH'):format(row.requires), true -- skippable
+  end
+
   if row.cmd then
     if not on_path(argv0(row.cmd)) then
       return nil, ('%q not on PATH'):format(argv0(row.cmd)), true -- skippable
@@ -78,8 +124,20 @@ local function callback_for(row)
     return focus(row.app, row.toggle)
   elseif row.fn then
     return row.fn
+  elseif row.choose then
+    if type(row.choose) ~= 'table' then
+      return nil, 'choose must be a table { items = ..., onSelect = ... }'
+    end
+    if type(row.choose.onSelect) ~= 'function' then
+      return nil, 'choose.onSelect must be a function'
+    end
+    local it = row.choose.items
+    if type(it) ~= 'table' and type(it) ~= 'function' then
+      return nil, 'choose.items must be a table or a function returning one'
+    end
+    return choose(row.choose)
   end
-  return nil, 'row has no cmd/app/fn action'
+  return nil, 'row has no cmd/app/fn/choose action'
 end
 
 --- Register every row. Returns counts for the load summary.
@@ -115,5 +173,6 @@ function M.bind(rows)
 end
 
 M.notify = notify
+M.run = run
 
 return M

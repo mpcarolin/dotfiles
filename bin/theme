@@ -198,13 +198,25 @@ EOF
 # subcommands
 # --------------------------------------------------------------------------
 
+# theme list              -> decorated for reading, `*` marks the active theme
+# theme list --porcelain  -> NAME<TAB>BACKGROUND<TAB>ACTIVE for scripts, where
+#                            ACTIVE is "active" or empty. Stable output: the
+#                            hammerspoon theme picker parses this, so it does
+#                            not have to scrape the human format.
 cmd_list() {
-  local active
+  local porcelain=""
+  [ "${1:-}" = "--porcelain" ] && porcelain=1
+
+  local active t mark bg
   active="$(state_get THEME_NAME)"
-  local t mark
   while IFS= read -r t; do
-    [ "$t" = "$active" ] && mark='*' || mark=' '
-    printf '%s %s\n' "$mark" "$t"
+    if [ -n "$porcelain" ]; then
+      bg="$( . "$THEMES_DIR/$t/theme.env" >/dev/null 2>&1; printf '%s' "${NVIM_BACKGROUND:-}" )"
+      printf '%s\t%s\t%s\n' "$t" "$bg" "$([ "$t" = "$active" ] && printf 'active')"
+    else
+      [ "$t" = "$active" ] && mark='*' || mark=' '
+      printf '%s %s\n' "$mark" "$t"
+    fi
   done < <(list_themes)
 }
 
@@ -332,7 +344,7 @@ theme — switch ghostty, neovim, herdr and the macOS wallpaper together.
 
   theme set <name> [--wallpaper FILE]   activate a theme
   theme current                         show the active theme
-  theme list                            list available themes
+  theme list [--porcelain]              list available themes
   theme next                            cycle to the next theme (wraps)
   theme wallpaper                       random wallpaper within this theme
   theme wallpaper next|prev             cycle wallpapers within this theme
@@ -364,7 +376,7 @@ case "$cmd" in
     cmd_set "$name" "$wp"
     ;;
   current)    cmd_current ;;
-  list|ls)    cmd_list ;;
+  list|ls)    cmd_list "${1:-}" ;;
   next)       cmd_next ;;
   wallpaper)  cmd_wallpaper "${1:-}" ;;
   ""|-h|--help|help) usage ;;
