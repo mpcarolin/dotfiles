@@ -73,6 +73,7 @@ link "$DOTFILES/claude/hooks" "$HOME/.claude/hooks"
 info "Linking individual files"
 link "$DOTFILES/claude/settings.json"  "$HOME/.claude/settings.json"
 link "$DOTFILES/claude/statusline.sh"  "$HOME/.config/claude/statusline.sh"
+link "$DOTFILES/herdr/config.toml"     "$HOME/.config/herdr/config.toml"
 
 # ---------------------------------------------------------------------------
 # Hand-authored skills — per-skill symlinks. The ~/.claude/skills parent also

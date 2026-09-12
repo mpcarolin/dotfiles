@@ -1,0 +1,18 @@
+# herdr configuration — symlinked to ~/.config/herdr/config.toml by install.sh.
+#
+# Only the single file is linked, never the parent directory: ~/.config/herdr/
+# also holds live sockets, logs, and session.json, which must not enter git.
+
+[theme]
+name = "terminal"
+auto_switch = false
+
+[keys]
+next_tab = "alt+shift+l"
+previous_tab = "alt+shift+h"
+next_workspace = "alt+shift+j"
+previous_workspace = "alt+shift+k"
+
+[ui]
+sidebar_collapsed_mode = "hidden"  # default is "compact"
+hide_tab_bar_when_single_tab = true
