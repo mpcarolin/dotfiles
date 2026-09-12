@@ -1,3 +1,6 @@
+# tokyonight_moon — shadows ghostty's builtin of the same name.
+# Kept because this version has real bright variants for palette 9-14;
+# the builtin duplicates palette 1-6 there, so bold text does not brighten.
 palette = 0=#1b1d2b
 palette = 1=#ff757f
 palette = 2=#c3e88d
@@ -18,5 +21,6 @@ palette = 15=#c8d3f5
 background = #222436
 foreground = #c8d3f5
 cursor-color = #c8d3f5
+cursor-text = #222436
 selection-background = #2d3f76
 selection-foreground = #c8d3f5
