@@ -64,6 +64,7 @@ info "Linking config directories"
 link "$DOTFILES/tmux"    "$HOME/.config/tmux"
 link "$DOTFILES/ghostty" "$HOME/.config/ghostty"
 link "$DOTFILES/nvim"    "$HOME/.config/nvim"
+link "$DOTFILES/hammerspoon" "$HOME/.hammerspoon"
 link "$DOTFILES/claude/hooks" "$HOME/.claude/hooks"
 
 # ---------------------------------------------------------------------------
@@ -74,6 +75,17 @@ info "Linking individual files"
 link "$DOTFILES/claude/settings.json"  "$HOME/.claude/settings.json"
 link "$DOTFILES/claude/statusline.sh"  "$HOME/.config/claude/statusline.sh"
 link "$DOTFILES/herdr/config.toml"     "$HOME/.config/herdr/config.toml"
+
+# ---------------------------------------------------------------------------
+# Executables. ~/.local/bin is expected to be on PATH.
+# ---------------------------------------------------------------------------
+info "Linking executables"
+mkdir -p "$HOME/.local/bin"
+link "$DOTFILES/bin/theme" "$HOME/.local/bin/theme"
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) warn "$HOME/.local/bin is not on PATH — add it to use \`theme\`" ;;
+esac
 
 # ---------------------------------------------------------------------------
 # Hand-authored skills — per-skill symlinks. The ~/.claude/skills parent also
