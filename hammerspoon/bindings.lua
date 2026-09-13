@@ -9,7 +9,8 @@
 --- Row format:  { {mods}, 'KEY', cmd = '…' | app = '…' [, toggle = true] | fn = … }
 
 return {
-  -- App focus. cmd+alt+<initial>.
-  { { 'cmd', 'alt' }, 'G', app = 'Ghostty' },
-  { { 'cmd', 'alt' }, 'O', app = 'Obsidian' },
+	-- App focus. cmd+alt+<initial>.
+	{ { "cmd", "alt" }, "G", app = "Ghostty" },
+	{ { "cmd", "alt" }, "O", app = "Obsidian" },
+	{ { "cmd", "alt" }, "B", app = "Zen" },
 }
