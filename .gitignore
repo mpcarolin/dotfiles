@@ -4,6 +4,9 @@ settings.local.json
 # Active theme, written by bin/theme (runtime state, not source).
 ghostty/theme.conf
 
+# Per-machine favourite themes (see themes/favorites.local.template).
+themes/favorites.local
+
 # Per-machine hotkey bindings (see bindings.local.lua.template).
 hammerspoon/bindings.local.lua
 

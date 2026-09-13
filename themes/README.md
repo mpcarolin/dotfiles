@@ -39,6 +39,18 @@ and nvim plugins already own their colors; duplicating hexes here would just be 
 source of truth to keep in sync. When tmux comes back into scope, give it
 `tmux/themes/<name>.conf` includes rather than adding palette data to these manifests.
 
+## Favourites
+
+`theme toggle` cycles only a short favourites list, which is what `cmd+shift+T`
+is bound to — cycling all thirteen with `theme next` is a slog when you really
+want to flip between two. The list is `themes/favorites.local`, one name per
+line, and it is **gitignored**: which themes you like is a per-machine
+preference, not a theme definition. See `favorites.local.template`.
+
+With no `favorites.local`, the default is the everforest dark/light pair. Names
+without a manifest are skipped, so deleting a theme cannot wedge the toggle.
+`theme favorites` shows the active list.
+
 ## Runtime state lives elsewhere
 
 A manifest is a *definition* and never changes when you switch themes. Which theme is

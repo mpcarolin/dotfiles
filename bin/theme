@@ -23,6 +23,9 @@ done
 DOTFILES="$(cd "$(dirname "$SELF")/.." && pwd)"
 
 THEMES_DIR="$DOTFILES/themes"
+# Per-machine favourites, one theme name per line. Gitignored: which themes you
+# like is a preference, not a theme definition, and this repo is shared.
+FAVORITES_FILE="$THEMES_DIR/favorites.local"
 WALLPAPERS_DIR="$DOTFILES/wallpapers"
 GHOSTTY_INCLUDE="$DOTFILES/ghostty/theme.conf"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-theme"
@@ -286,19 +289,68 @@ cmd_set() {
   reload_herdr
 }
 
-cmd_next() {
+# The favourites list: one theme name per line from favorites.local, ignoring
+# blanks and # comments, and dropping names with no manifest (so deleting a
+# theme cannot wedge the toggle). Falls back to the everforest pair, which is
+# the light/dark toggle this defaulted to before favourites existed.
+favorites() {
+  if [ -f "$FAVORITES_FILE" ]; then
+    sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$FAVORITES_FILE" |
+      while IFS= read -r t; do
+        [ -f "$THEMES_DIR/$t/theme.env" ] && printf '%s\n' "$t"
+      done
+  else
+    printf '%s\n' everforest everforest-light
+  fi
+}
+
+# Advance within a list read on stdin: the entry after the active theme,
+# wrapping. Falls back to the first entry when the active theme is not in the
+# list, which is what makes the toggle predictable after switching away.
+cycle_in() {
   local -a all=()
   local t
-  while IFS= read -r t; do all+=("$t"); done < <(list_themes)
-  [ "${#all[@]}" -gt 0 ] || die "no themes in $THEMES_DIR"
+  while IFS= read -r t; do all+=("$t"); done
+  [ "${#all[@]}" -gt 0 ] || return 1
 
-  # Default idx=-1 means "active theme not in the list" -> start at the first.
   local active i idx=-1
   active="$(state_get THEME_NAME)"
   for i in "${!all[@]}"; do
     if [ "${all[$i]}" = "$active" ]; then idx=$i; break; fi
   done
-  cmd_set "${all[$(( (idx + 1) % ${#all[@]} ))]}"
+  printf '%s\n' "${all[$(( (idx + 1) % ${#all[@]} ))]}"
+}
+
+# theme favorites -> show the list, marking the active theme
+cmd_favorites() {
+  local active t mark
+  active="$(state_get THEME_NAME)"
+  local -a favs=()
+  while IFS= read -r t; do favs+=("$t"); done < <(favorites)
+
+  if [ "${#favs[@]}" -eq 0 ]; then
+    warn "no valid themes in $FAVORITES_FILE"
+    return 1
+  fi
+  for t in "${favs[@]}"; do
+    [ "$t" = "$active" ] && mark='*' || mark=' '
+    printf '%s %s\n' "$mark" "$t"
+  done
+  [ -f "$FAVORITES_FILE" ] || log "(default list — create $FAVORITES_FILE to change it)"
+}
+
+# theme toggle -> cycle within the favourites only
+cmd_toggle() {
+  local next
+  next="$(favorites | cycle_in)" ||
+    die "no valid themes in $FAVORITES_FILE (see: theme favorites)"
+  cmd_set "$next"
+}
+
+cmd_next() {
+  local next
+  next="$(list_themes | cycle_in)" || die "no themes in $THEMES_DIR"
+  cmd_set "$next"
 }
 
 # theme wallpaper            -> random pick within the active theme's dir
@@ -345,7 +397,9 @@ theme — switch ghostty, neovim, herdr and the macOS wallpaper together.
   theme set <name> [--wallpaper FILE]   activate a theme
   theme current                         show the active theme
   theme list [--porcelain]              list available themes
-  theme next                            cycle to the next theme (wraps)
+  theme next                            cycle through every theme (wraps)
+  theme toggle                          cycle through favourites only (wraps)
+  theme favorites                       show the favourites list
   theme wallpaper                       random wallpaper within this theme
   theme wallpaper next|prev             cycle wallpapers within this theme
   theme wallpaper <FILE>                pin a specific wallpaper
@@ -378,6 +432,8 @@ case "$cmd" in
   current)    cmd_current ;;
   list|ls)    cmd_list "${1:-}" ;;
   next)       cmd_next ;;
+  toggle)     cmd_toggle ;;
+  favorites|favourites|favs) cmd_favorites ;;
   wallpaper)  cmd_wallpaper "${1:-}" ;;
   ""|-h|--help|help) usage ;;
   *)          die "unknown command: $cmd (try: theme --help)" ;;
