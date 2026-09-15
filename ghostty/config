@@ -16,6 +16,7 @@ macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
 
 title = " "
+background-opacity = 0.89
 
 # Active theme. Written by `bin/theme`; gitignored so switching themes never
 # dirties this file. The `?` makes it optional (a fresh clone has no theme.conf)

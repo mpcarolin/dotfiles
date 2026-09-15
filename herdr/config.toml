@@ -2,6 +2,7 @@
 #
 # Only the single file is linked, never the parent directory: ~/.config/herdr/
 # also holds live sockets, logs, and session.json, which must not enter git.
+onboarding = false
 
 [theme]
 name = "terminal"
