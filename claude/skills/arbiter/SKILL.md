@@ -60,8 +60,8 @@ The JSON returned by `arbiter list --json` (and `arbiter show <id> --json`) is o
 |---|---|
 | `id` | 8-char hex hash of `(file, line_start, branch, created_at)`. Use this when calling `set-status`/`resolve`/`show`/`reply` |
 | `file` | repo-relative path |
-| `line_start`, `line_end` | 1-indexed range in the **post-image** of the diff (the working tree, not the old version) |
-| `commit` | short SHA the note was filed against if the user wrote it from a fugitive diff buffer; `null` otherwise. Informational only |
+| `line_start`, `line_end` | 1-indexed range relative to the note's revision: the **working tree** when `commit` is `null`, the **commit blob** (`git show <commit>:<file>`) when `commit` is set |
+| `commit` | short SHA the note was filed against, or `null`. **When set, the note is about that commit — read the file at that commit (`git show <commit>:<file>`), not the working tree.** Set for diffview file-history notes (commit-relative line numbers) and fugitive-diff notes |
 | `branch` | branch name, or short SHA on detached HEAD; `null` on error |
 | `note` | free text, may be markdown — preserve fences/bullets when reading |
 | `created_at` | ISO-8601 with offset |
@@ -69,7 +69,7 @@ The JSON returned by `arbiter list --json` (and `arbiter show <id> --json`) is o
 | `author` | free-form string (`"human"` for plugin-created notes, `"ai"` or an agent name like `"claude-opus"` for CLI replies). Missing `author` reads as `"human"` for backward compatibility |
 | `comments` | optional array of replies (one level — replies cannot themselves have replies). Each entry is `{author, body, created_at}`. Missing/empty means no replies; the field is only written once a reply exists |
 
-Always read the **full** `line_start..line_end` range from the file before reasoning about a note — single-line `line_start` is common but multi-line notes are real, and the surrounding code is the context the user expected you to read.
+Always read the **full** `line_start..line_end` range before reasoning about a note — single-line `line_start` is common but multi-line notes are real, and the surrounding code is the context the user expected you to read. **Read from the right revision:** if `commit` is set, read `git show <commit>:<file>` for those lines — the line numbers are relative to that commit's blob and the working tree may have drifted. If `commit` is `null`, read the working tree as before.
 
 ## What to act on
 
@@ -134,7 +134,7 @@ Use the `id` field returned by `arbiter list --json` / `arbiter show`. Don't inv
 A typical session looks like:
 
 1. `arbiter list --json` — get the open notes for the current branch.
-2. For each note: read `file:line_start..line_end` from the working tree to see the context.
+2. For each note: read `file:line_start..line_end` to see the context — from `git show <commit>:<file>` if `commit` is set (line numbers are commit-relative; the working tree may have drifted), otherwise from the working tree.
 3. `arbiter set-status <id> in-progress`
 4. Apply the change.
 5. `arbiter set-status <id> needs-rereview`
