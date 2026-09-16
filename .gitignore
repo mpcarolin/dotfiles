@@ -12,3 +12,6 @@ hammerspoon/bindings.local.lua
 
 # Hammerspoon-managed Spoon installs (runtime, not source).
 hammerspoon/Spoons/
+
+# Installed and overwritten by herdr (runtime integration, not source).
+claude/hooks/herdr-agent-state.sh
