@@ -1,0 +1,440 @@
+#!/usr/bin/env bash
+#
+# theme — switch ghostty, neovim, herdr and the macOS wallpaper together.
+#
+# Run `theme --help` for usage; the text lives in usage() so it cannot drift.
+#
+# Themes are defined by themes/<name>/theme.env in the dotfiles repo. Which theme
+# is *active* is runtime state kept outside the repo, so switching never dirties
+# git. See themes/README.md.
+
+set -euo pipefail
+
+# Repo root = parent of the directory containing this script, with symlinks
+# resolved (this lands in ~/.local/bin as a symlink).
+SELF="${BASH_SOURCE[0]}"
+while [ -L "$SELF" ]; do
+  link="$(readlink "$SELF")"
+  case "$link" in
+    /*) SELF="$link" ;;
+    *)  SELF="$(dirname "$SELF")/$link" ;;
+  esac
+done
+DOTFILES="$(cd "$(dirname "$SELF")/.." && pwd)"
+
+THEMES_DIR="$DOTFILES/themes"
+# Per-machine favourites, one theme name per line. Gitignored: which themes you
+# like is a preference, not a theme definition, and this repo is shared.
+FAVORITES_FILE="$THEMES_DIR/favorites.local"
+WALLPAPERS_DIR="$DOTFILES/wallpapers"
+GHOSTTY_INCLUDE="$DOTFILES/ghostty/theme.conf"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-theme"
+STATE="$STATE_DIR/current"
+
+log()  { printf '  %s\n' "$*"; }
+info() { printf '\n==> %s\n' "$*"; }
+warn() { printf 'WARN: %s\n' "$*" >&2; }
+die()  { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+# --------------------------------------------------------------------------
+# helpers
+# --------------------------------------------------------------------------
+
+list_themes() {
+  local d
+  for d in "$THEMES_DIR"/*/; do
+    [ -f "${d}theme.env" ] || continue
+    d="${d%/}"
+    printf '%s\n' "${d##*/}"
+  done | LC_ALL=C sort
+}
+
+# Read one KEY from the state file. Empty if absent. The state file is written
+# by write_state as shell-sourceable `KEY="value"` lines, so a subshell source
+# reads it without a parser — and without leaking the vars into this shell.
+state_get() {
+  [ -f "$STATE" ] || return 0
+  # shellcheck disable=SC1090
+  ( . "$STATE" >/dev/null 2>&1 || exit 0; printf '%s\n' "${!1:-}" )
+}
+
+# One random image from a directory, or empty if there are none. Emptiness is
+# the "no images here" signal, so there is a single copy of the glob and a
+# single directory traversal per pick.
+random_image() {
+  [ -d "$1" ] || return 0
+  find "$1" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+    2>/dev/null | sort -R | head -1
+}
+
+# Absolute path to a file, without requiring GNU readlink.
+# Images in <dir>, one per line, deterministically ordered.
+images_in() {
+  [ -d "$1" ] || return 0
+  find "$1" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) \
+    2>/dev/null | LC_ALL=C sort
+}
+
+# step_image <dir> <current> <+1|-1> — the image <step> positions from <current>,
+# wrapping at both ends. If <current> is not in <dir> (theme just changed, or a
+# pin from elsewhere), start at the near end so the first press is predictable.
+step_image() {
+  local dir="$1" current="$2" step="$3"
+  local -a imgs=()
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && imgs+=("$f")
+  done < <(images_in "$dir")
+
+  local n="${#imgs[@]}"
+  [ "$n" -gt 0 ] || return 0
+
+  local i idx=-1
+  for i in "${!imgs[@]}"; do
+    if [ "${imgs[$i]}" = "$current" ]; then
+      idx=$i
+      break
+    fi
+  done
+
+  if [ "$idx" -lt 0 ]; then
+    [ "$step" -gt 0 ] && printf '%s\n' "${imgs[0]}" || printf '%s\n' "${imgs[$((n - 1))]}"
+    return 0
+  fi
+  printf '%s\n' "${imgs[$(((idx + step + n) % n))]}"
+}
+
+abspath() {
+  printf '%s/%s\n' "$(cd "$(dirname "$1")" && pwd -P)" "${1##*/}"
+}
+
+# Resolve the wallpaper for a theme: a pinned file wins, otherwise a random
+# image from the theme's directory, falling back to neutral/. Prints the path,
+# or nothing if no candidate exists. `pinned` is validated by the caller.
+resolve_wallpaper() {
+  local dir="$1" pinned="$2"
+  if [ -n "$pinned" ]; then
+    abspath "$pinned"
+    return 0
+  fi
+  local pick
+  pick="$(random_image "$dir")"
+  if [ -z "$pick" ] && [ "$dir" != "$WALLPAPERS_DIR/neutral" ]; then
+    warn "no images in $dir — falling back to neutral/"
+    pick="$(random_image "$WALLPAPERS_DIR/neutral")"
+  fi
+  [ -n "$pick" ] && printf '%s\n' "$pick"
+}
+
+# macOS 26: the `System Events` wallpaper API is broken (-1728) and
+# desktoppicture.db is gone. The Finder API works in both directions.
+set_wallpaper() {
+  local f="$1"
+  osascript -e "tell application \"Finder\" to set desktop picture to POSIX file \"$f\"" \
+    >/dev/null 2>&1 || { warn "could not set wallpaper: $f"; return 1; }
+  local parent="${f%/*}"
+  log "wallpaper  ${parent##*/}/${f##*/}"
+}
+
+# Ghostty 1.1.3 has no CLI/IPC reload, so click the menu item. Needs
+# Accessibility permission; falls back to telling the user the keybind.
+reload_ghostty() {
+  # The process is `ghostty` (lowercase); the AppleScript process name is
+  # `Ghostty`. -i because pgrep -x is case-sensitive.
+  pgrep -xiq ghostty || { log "ghostty    not running"; return 0; }
+  if osascript -e 'tell application "System Events" to tell process "ghostty" to click menu item "Reload Configuration" of menu 1 of menu bar item "Ghostty" of menu bar 1' >/dev/null 2>&1; then
+    log "ghostty    reloaded"
+  else
+    warn "could not auto-reload Ghostty (grant Accessibility permission in
+      System Settings > Privacy & Security > Accessibility).
+      Press cmd+shift+, in Ghostty to reload manually."
+  fi
+}
+
+# New nvim instances read the state file at startup; this just pushes the
+# change into already-running ones. Never fatal.
+reload_nvim() {
+  if pgrep -xq nvim; then
+    pkill -USR1 -x nvim 2>/dev/null || true
+    log "nvim       signalled running instances"
+  else
+    log "nvim       none running"
+  fi
+}
+
+# herdr uses `[theme] name = "terminal"`, so it inherits the terminal palette;
+# it only needs a nudge to re-read.
+reload_herdr() {
+  if command -v herdr >/dev/null 2>&1; then
+    herdr server reload-config >/dev/null 2>&1 && log "herdr      reloaded" \
+      || log "herdr      not running"
+  fi
+}
+
+# write_state <theme-name> <wallpaper-path>
+# The single definition of what the state file contains. Everything but the
+# wallpaper is derived from the manifest, so callers never round-trip fields
+# back out of the file they are about to overwrite.
+write_state() {
+  local name="$1" wallpaper="$2"
+  # shellcheck disable=SC1090
+  local nvim_colorscheme nvim_background nvim_variant
+  eval "$(
+    NVIM_COLORSCHEME= NVIM_BACKGROUND= NVIM_VARIANT=
+    . "$THEMES_DIR/$name/theme.env"
+    printf 'nvim_colorscheme=%q nvim_background=%q nvim_variant=%q\n' \
+      "$NVIM_COLORSCHEME" "$NVIM_BACKGROUND" "$NVIM_VARIANT"
+  )"
+  mkdir -p "$STATE_DIR"
+  cat > "$STATE" <<EOF
+# Active theme. Written by \`theme set\`; read by nvim (lua/custom/theme.lua).
+# Runtime state — deliberately outside the dotfiles repo.
+THEME_NAME="$name"
+NVIM_COLORSCHEME="$nvim_colorscheme"
+NVIM_BACKGROUND="$nvim_background"
+NVIM_VARIANT="$nvim_variant"
+WALLPAPER="$wallpaper"
+EOF
+}
+
+# --------------------------------------------------------------------------
+# subcommands
+# --------------------------------------------------------------------------
+
+# theme list              -> decorated for reading, `*` marks the active theme
+# theme list --porcelain  -> NAME<TAB>BACKGROUND<TAB>ACTIVE for scripts, where
+#                            ACTIVE is "active" or empty. Stable output: the
+#                            hammerspoon theme picker parses this, so it does
+#                            not have to scrape the human format.
+cmd_list() {
+  local porcelain=""
+  [ "${1:-}" = "--porcelain" ] && porcelain=1
+
+  local active t mark bg
+  active="$(state_get THEME_NAME)"
+  while IFS= read -r t; do
+    if [ -n "$porcelain" ]; then
+      bg="$( . "$THEMES_DIR/$t/theme.env" >/dev/null 2>&1; printf '%s' "${NVIM_BACKGROUND:-}" )"
+      printf '%s\t%s\t%s\n' "$t" "$bg" "$([ "$t" = "$active" ] && printf 'active')"
+    else
+      [ "$t" = "$active" ] && mark='*' || mark=' '
+      printf '%s %s\n' "$mark" "$t"
+    fi
+  done < <(list_themes)
+}
+
+cmd_current() {
+  local active
+  active="$(state_get THEME_NAME)"
+  if [ -z "$active" ]; then
+    echo "no theme set (run: theme set <name>)"
+    return 1
+  fi
+  echo "$active"
+}
+
+cmd_set() {
+  local name="${1:-}" pinned="${2:-}"
+  [ -n "$name" ] || die "usage: theme set <name> [--wallpaper FILE]"
+
+  local manifest="$THEMES_DIR/$name/theme.env"
+  if [ ! -f "$manifest" ]; then
+    printf 'ERROR: unknown theme: %s\n\nAvailable:\n' "$name" >&2
+    cmd_list >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1090
+  GHOSTTY_THEME= NVIM_COLORSCHEME= NVIM_BACKGROUND= NVIM_VARIANT= WALLPAPER_DIR=
+  source "$manifest"
+
+  local k
+  for k in GHOSTTY_THEME NVIM_COLORSCHEME NVIM_BACKGROUND NVIM_VARIANT WALLPAPER_DIR; do
+    [ -n "${!k:-}" ] || die "$manifest: $k is missing or empty"
+  done
+  case "$NVIM_BACKGROUND" in
+    dark|light) ;;
+    *) die "$manifest: NVIM_BACKGROUND must be 'dark' or 'light', got '$NVIM_BACKGROUND'" ;;
+  esac
+
+  # Validate a pinned wallpaper BEFORE mutating anything, so a bad path cannot
+  # leave a half-applied switch behind.
+  if [ -n "$pinned" ]; then
+    [ -f "$pinned" ] || die "no such wallpaper: $pinned"
+  fi
+
+  info "theme: $name"
+
+  # 1. ghostty — write ONLY the gitignored include, never the tracked config.
+  printf '# Written by `theme set`. Gitignored; edits here are overwritten.\ntheme = %s\n' \
+    "$GHOSTTY_THEME" > "$GHOSTTY_INCLUDE"
+  log "ghostty    theme = $GHOSTTY_THEME"
+  reload_ghostty
+
+  # 2. wallpaper — never fail the switch over this.
+  local pick
+  pick="$(resolve_wallpaper "$WALLPAPERS_DIR/$WALLPAPER_DIR" "$pinned")"
+  if [ -n "$pick" ]; then
+    set_wallpaper "$pick" || pick=""
+  else
+    warn "no wallpaper found for $name"
+  fi
+
+  # 3. state — written before the reload pushes so readers see fresh values.
+  write_state "$name" "$pick"
+  log "state      $STATE"
+
+  # 4. nvim + 5. herdr
+  reload_nvim
+  reload_herdr
+}
+
+# The favourites list: one theme name per line from favorites.local, ignoring
+# blanks and # comments, and dropping names with no manifest (so deleting a
+# theme cannot wedge the toggle). Falls back to the everforest pair, which is
+# the light/dark toggle this defaulted to before favourites existed.
+favorites() {
+  if [ -f "$FAVORITES_FILE" ]; then
+    sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$FAVORITES_FILE" |
+      while IFS= read -r t; do
+        [ -f "$THEMES_DIR/$t/theme.env" ] && printf '%s\n' "$t"
+      done
+  else
+    printf '%s\n' everforest everforest-light
+  fi
+}
+
+# Advance within a list read on stdin: the entry after the active theme,
+# wrapping. Falls back to the first entry when the active theme is not in the
+# list, which is what makes the toggle predictable after switching away.
+cycle_in() {
+  local -a all=()
+  local t
+  while IFS= read -r t; do all+=("$t"); done
+  [ "${#all[@]}" -gt 0 ] || return 1
+
+  local active i idx=-1
+  active="$(state_get THEME_NAME)"
+  for i in "${!all[@]}"; do
+    if [ "${all[$i]}" = "$active" ]; then idx=$i; break; fi
+  done
+  printf '%s\n' "${all[$(( (idx + 1) % ${#all[@]} ))]}"
+}
+
+# theme favorites -> show the list, marking the active theme
+cmd_favorites() {
+  local active t mark
+  active="$(state_get THEME_NAME)"
+  local -a favs=()
+  while IFS= read -r t; do favs+=("$t"); done < <(favorites)
+
+  if [ "${#favs[@]}" -eq 0 ]; then
+    warn "no valid themes in $FAVORITES_FILE"
+    return 1
+  fi
+  for t in "${favs[@]}"; do
+    [ "$t" = "$active" ] && mark='*' || mark=' '
+    printf '%s %s\n' "$mark" "$t"
+  done
+  [ -f "$FAVORITES_FILE" ] || log "(default list — create $FAVORITES_FILE to change it)"
+}
+
+# theme toggle -> cycle within the favourites only
+cmd_toggle() {
+  local next
+  next="$(favorites | cycle_in)" ||
+    die "no valid themes in $FAVORITES_FILE (see: theme favorites)"
+  cmd_set "$next"
+}
+
+cmd_next() {
+  local next
+  next="$(list_themes | cycle_in)" || die "no themes in $THEMES_DIR"
+  cmd_set "$next"
+}
+
+# theme wallpaper            -> random pick within the active theme's dir
+# theme wallpaper next|prev   -> deterministic cycle within that dir
+# theme wallpaper <FILE>      -> pin that file
+cmd_wallpaper() {
+  local arg="${1:-}" pinned="" step=0
+
+  case "$arg" in
+    next) step=1 ;;
+    prev) step=-1 ;;
+    '') ;;
+    *) pinned="$arg"; [ -f "$pinned" ] || die "no such wallpaper: $pinned" ;;
+  esac
+
+  local name
+  name="$(state_get THEME_NAME)"
+  [ -n "$name" ] || die "no theme set (run: theme set <name>)"
+  [ -f "$THEMES_DIR/$name/theme.env" ] || die "unknown theme in state: $name"
+
+  # shellcheck disable=SC1090
+  local WALLPAPER_DIR=
+  . "$THEMES_DIR/$name/theme.env"
+
+  local dir="$WALLPAPERS_DIR/$WALLPAPER_DIR" pick
+  if [ "$step" -ne 0 ]; then
+    # Cycle within the theme's own dir, so the wallpaper stays theme-coherent.
+    [ -d "$dir" ] || die "no such wallpaper dir: $dir"
+    pick="$(step_image "$dir" "$(state_get WALLPAPER)" "$step")"
+    [ -n "$pick" ] || die "no images in $dir"
+  else
+    pick="$(resolve_wallpaper "$dir" "$pinned")"
+    [ -n "$pick" ] || die "no wallpaper found for $name"
+  fi
+
+  set_wallpaper "$pick"
+  write_state "$name" "$pick"
+}
+
+usage() {
+  cat <<'EOF'
+theme — switch ghostty, neovim, herdr and the macOS wallpaper together.
+
+  theme set <name> [--wallpaper FILE]   activate a theme
+  theme current                         show the active theme
+  theme list [--porcelain]              list available themes
+  theme next                            cycle through every theme (wraps)
+  theme toggle                          cycle through favourites only (wraps)
+  theme favorites                       show the favourites list
+  theme wallpaper                       random wallpaper within this theme
+  theme wallpaper next|prev             cycle wallpapers within this theme
+  theme wallpaper <FILE>                pin a specific wallpaper
+
+Themes are defined by themes/<name>/theme.env in the dotfiles repo. Which theme
+is *active* is runtime state kept outside the repo, so switching never dirties
+git. See themes/README.md.
+EOF
+}
+
+# --------------------------------------------------------------------------
+# arg parsing
+# --------------------------------------------------------------------------
+
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+  set)
+    name="" wp=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --wallpaper) wp="${2:-}"; [ -n "$wp" ] || die "--wallpaper needs a file"; shift 2 ;;
+        -*) die "unknown flag: $1" ;;
+        *) name="$1"; shift ;;
+      esac
+    done
+    cmd_set "$name" "$wp"
+    ;;
+  current)    cmd_current ;;
+  list|ls)    cmd_list "${1:-}" ;;
+  next)       cmd_next ;;
+  toggle)     cmd_toggle ;;
+  favorites|favourites|favs) cmd_favorites ;;
+  wallpaper)  cmd_wallpaper "${1:-}" ;;
+  ""|-h|--help|help) usage ;;
+  *)          die "unknown command: $cmd (try: theme --help)" ;;
+esac

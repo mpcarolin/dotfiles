@@ -1,0 +1,8 @@
+# Favourite themes, cycled by `theme toggle`, in order. Copy to
+# `favorites.local` (gitignored) and edit — which themes you like is a
+# per-machine preference, and this repo is shared with the work machine.
+#
+# One name per line; blanks and # comments ignored. Names with no manifest are
+# skipped. With no favorites.local at all, the default is the everforest pair.
+everforest
+everforest-light

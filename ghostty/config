@@ -1,7 +1,6 @@
 font-family = "CaskaydiaMono Nerd Font"
 font-feature = +calt
 #font-thicken = true
-theme = everforest-dark-medium
 
 # kill the leftover-pixel strip at the window edge
 #window-padding-x = 0
@@ -16,3 +15,10 @@ macos-option-as-alt = left
 macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
 
+title = " "
+background-opacity = 0.89
+
+# Active theme. Written by `bin/theme`; gitignored so switching themes never
+# dirties this file. The `?` makes it optional (a fresh clone has no theme.conf)
+# and being last means its `theme =` wins.
+config-file = ?theme.conf
