@@ -12,5 +12,4 @@ return {
 	-- App focus. cmd+alt+<initial>.
 	{ { "cmd", "alt" }, "G", app = "Ghostty" },
 	{ { "cmd", "alt" }, "O", app = "Obsidian" },
-	{ { "cmd", "alt" }, "B", app = "Zen" },
 }
