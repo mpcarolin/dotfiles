@@ -69,7 +69,22 @@ human output) and sorts the active theme to the top.
 | `cmd+shift+W` | `theme wallpaper next` | `bindings.local.lua` |
 | `cmd+alt+G` | focus Ghostty | `bindings.lua` |
 | `cmd+alt+O` | focus Obsidian | `bindings.lua` |
+| `ctrl+alt+H` | left half of screen | `bindings.lua` |
+| `ctrl+alt+L` | right half of screen | `bindings.lua` |
+| `ctrl+alt+K` | top half of screen | `bindings.lua` |
+| `ctrl+alt+J` | bottom half of screen | `bindings.lua` |
+| `ctrl+alt+M` | fullscreen (Hammerspoon-level, not macOS Spaces) | `bindings.lua` |
+| `ctrl+alt+C` | center at ~85% of screen size | `bindings.lua` |
+| `ctrl+alt+=` | increase window padding | `bindings.lua` |
+| `ctrl+alt+-` | decrease window padding | `bindings.lua` |
 | `cmd+alt+ctrl+R` | reload this config | `init.lua` |
+
+The half/fullscreen layouts leave a gap at the screen edge and between
+adjacent halves, set by `M.padding` (points, starts at 8) in `lib/wm.lua`.
+Adjust it live with `ctrl+alt+=` / `ctrl+alt+-` (4pt per press, alerts the
+new value); if the focused window is already snapped to one of these
+layouts it is reflowed immediately, otherwise the new padding applies to
+the next placement.
 
 ## How it behaves
 
