@@ -11,17 +11,17 @@
 local wm = require("lib.wm")
 
 return {
-	-- App focus. cmd+alt+<initial>.
-	{ { "cmd", "alt" }, "G", app = "Ghostty" },
-	{ { "cmd", "alt" }, "O", app = "Obsidian" },
+	-- App focus. ctrl+alt+<initial>.
+	{ { "ctrl", "alt" }, "G", app = "Ghostty" },
+	{ { "ctrl", "alt" }, "O", app = "Obsidian" },
 
-	-- Window management (Hyprland-style). ctrl+alt+<vim direction>.
-	{ { "ctrl", "alt" }, "H", fn = wm.left_half },
-	{ { "ctrl", "alt" }, "L", fn = wm.right_half },
-	{ { "ctrl", "alt" }, "K", fn = wm.top_half },
-	{ { "ctrl", "alt" }, "J", fn = wm.bottom_half },
-	{ { "ctrl", "alt" }, "M", fn = wm.fullscreen },
-	{ { "ctrl", "alt" }, "C", fn = wm.center },
-	{ { "ctrl", "alt" }, "=", fn = wm.increase_padding },
-	{ { "ctrl", "alt" }, "-", fn = wm.decrease_padding },
+	-- Window management (Hyprland-style). cmd+alt+<vim direction>.
+	{ { "cmd", "alt" }, "H", fn = wm.left_half },
+	{ { "cmd", "alt" }, "L", fn = wm.right_half },
+	{ { "cmd", "alt" }, "K", fn = wm.top_half },
+	{ { "cmd", "alt" }, "J", fn = wm.bottom_half },
+	{ { "cmd", "alt" }, "M", fn = wm.fullscreen },
+	{ { "cmd", "alt" }, "C", fn = wm.center },
+	{ { "cmd", "alt" }, "=", fn = wm.increase_padding },
+	{ { "cmd", "alt" }, "-", fn = wm.decrease_padding },
 }
