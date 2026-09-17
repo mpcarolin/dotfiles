@@ -6,12 +6,12 @@
 return {
   -- Theme switching — `theme` lives in this machine's dotfiles/bin.
   -- Toggle between favourites (themes/favorites.local), not all 13.
-  { { 'cmd', 'shift' }, 'T', cmd = 'theme toggle' },
-  { { 'cmd', 'shift' }, 'W', cmd = 'theme wallpaper next' },
+  { { 'alt', 'shift' }, 'T', cmd = 'theme toggle' },
+  { { 'alt', 'shift' }, 'W', cmd = 'theme wallpaper next' },
 
   -- Popup theme picker: type to filter, arrows to move, enter to apply.
   {
-    { 'cmd', 'shift' },
+    { 'alt', 'shift' },
     'P',
     choose = require('lib.theme').picker(),
     requires = 'theme',

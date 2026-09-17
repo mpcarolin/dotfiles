@@ -64,9 +64,9 @@ human output) and sorts the active theme to the top.
 
 | Key | Action | Defined in |
 |---|---|---|
-| `cmd+shift+P` | popup theme picker | `bindings.local.lua` |
-| `cmd+shift+T` | `theme toggle` — cycle favourites | `bindings.local.lua` |
-| `cmd+shift+W` | `theme wallpaper next` | `bindings.local.lua` |
+| `alt+shift+P` | popup theme picker | `bindings.local.lua` |
+| `alt+shift+T` | `theme toggle` — cycle favourites | `bindings.local.lua` |
+| `alt+shift+W` | `theme wallpaper next` | `bindings.local.lua` |
 | `ctrl+alt+G` | focus Ghostty | `bindings.lua` |
 | `ctrl+alt+O` | focus Obsidian | `bindings.lua` |
 | `cmd+alt+H` | left half of screen | `bindings.lua` |
