@@ -1,10 +1,10 @@
 --- A popup theme picker for the `theme` switcher (dotfiles/bin/theme).
 ---
 --- Tracked and machine-agnostic: this module only describes a picker. Binding
---- it to a key is a row in a bindings file, and dispatch skips that row on a
+--- it to a key is a row in a bindings file, and binder skips that row on a
 --- machine where `theme` is not on PATH.
 
-local dispatch = require 'lib.dispatch'
+local binder = require 'lib.binder'
 
 local M = {}
 
@@ -14,7 +14,7 @@ local M = {}
 local function themes()
   local out, ok = hs.execute('theme list --porcelain', true) -- true: login shell, for PATH
   if not ok then
-    dispatch.notify('Theme picker', 'Could not run `theme list`')
+    binder.notify('Theme picker', 'Could not run `theme list`')
     return {}
   end
 
@@ -55,7 +55,7 @@ function M.picker()
     width = 25,
     items = themes,
     onSelect = function(item)
-      dispatch.run('theme set ' .. ("%q"):format(item.theme))()
+      binder.run('theme set ' .. ("%q"):format(item.theme))()
     end,
   }
 end

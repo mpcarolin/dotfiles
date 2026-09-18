@@ -2,14 +2,14 @@
 ---
 --- Bindings live in `bindings.lua` (tracked, cross-machine) and
 --- `bindings.local.lua` (gitignored, this machine only). To add a shortcut,
---- add a row — never an `hs.hotkey.bind` call. See lib/dispatch.lua for the
+--- add a row — never an `hs.hotkey.bind` call. See lib/binder.lua for the
 --- row format and the four action types.
 
 -- `hs.ipc` backs the `hs` command-line tool, which is how this config can be
 -- inspected and reloaded from a shell.
 require 'hs.ipc'
 
-local dispatch = require 'lib.dispatch'
+local binder = require 'lib.binder'
 
 --- Load a binding table from a file in the config dir.
 ---
@@ -24,24 +24,24 @@ local function load_bindings(file, optional)
 
   if not hs.fs.attributes(path) then
     if not optional then
-      dispatch.notify('Hammerspoon: missing ' .. file, path)
+      binder.notify('Hammerspoon: missing ' .. file, path)
     end
     return {}
   end
 
   local chunk, err = loadfile(path)
   if not chunk then
-    dispatch.notify('Hammerspoon: ' .. file .. ' has a syntax error', tostring(err))
+    binder.notify('Hammerspoon: ' .. file .. ' has a syntax error', tostring(err))
     return {}
   end
 
   local ok, mod = pcall(chunk)
   if not ok then
-    dispatch.notify('Hammerspoon: ' .. file .. ' failed to load', tostring(mod))
+    binder.notify('Hammerspoon: ' .. file .. ' failed to load', tostring(mod))
     return {}
   end
   if type(mod) ~= 'table' then
-    dispatch.notify('Hammerspoon: ' .. file .. ' must return a table', 'got ' .. type(mod))
+    binder.notify('Hammerspoon: ' .. file .. ' must return a table', 'got ' .. type(mod))
     return {}
   end
   return mod
@@ -54,7 +54,7 @@ for _, source in ipairs { { 'bindings.lua', false }, { 'bindings.local.lua', tru
   end
 end
 
-local result = dispatch.bind(rows)
+local result = binder.bind(rows)
 
 -- Reload the config on any change to the dotfiles hammerspoon dir.
 local configWatcher = hs.pathwatcher.new(hs.configdir, function(paths)
