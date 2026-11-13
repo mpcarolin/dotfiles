@@ -49,7 +49,21 @@
       "Bash(arbiter *)"
     ]
   },
-  "model": "opus[1m]",
+  "model": "opus",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/herdr-agent-state.sh\" session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.config/claude/statusline.sh",
@@ -63,7 +77,8 @@
     "clangd-lsp@claude-plugins-official": true,
     "hey@37signals": true,
     "superpowers@claude-plugins-official": true,
-    "obsidian-cli@obsidian-cli-skill": true
+    "obsidian-cli@obsidian-cli-skill": true,
+    "whiteboard@devfast": true
   },
   "extraKnownMarketplaces": {
     "gitlab-skills": {
@@ -77,14 +92,25 @@
         "source": "github",
         "repo": "basecamp/claude-plugins"
       }
+    },
+    "devfast": {
+      "source": {
+        "source": "github",
+        "repo": "devdotfast/whiteboard"
+      }
     }
   },
   "alwaysThinkingEnabled": false,
   "effortLevel": "xhigh",
   "showClearContextOnPlanAccept": true,
   "tui": "fullscreen",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
   "skipWorkflowUsageWarning": true,
   "preferredNotifChannel": "terminal_bell",
+  "switchModelsOnFlag": true,
   "agentPushNotifEnabled": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
