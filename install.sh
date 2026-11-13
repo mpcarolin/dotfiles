@@ -88,6 +88,22 @@ case ":$PATH:" in
 esac
 
 # ---------------------------------------------------------------------------
+# SwiftBar plugins — per-plugin symlinks into whatever folder SwiftBar was
+# pointed at on this machine. Skipped when SwiftBar isn't configured.
+# ---------------------------------------------------------------------------
+info "Linking SwiftBar plugins"
+SWIFTBAR_DIR="$(defaults read com.ameba.SwiftBar PluginDirectory 2>/dev/null || true)"
+if [ -z "$SWIFTBAR_DIR" ]; then
+  log "skip  SwiftBar plugin folder not configured"
+else
+  # Each plugin lives in swiftbar/<name>/; only its executables get linked.
+  for plugin in "$DOTFILES"/swiftbar/*/*; do
+    [ -f "$plugin" ] && [ -x "$plugin" ] || continue
+    link "$plugin" "$SWIFTBAR_DIR/$(basename "$plugin")"
+  done
+fi
+
+# ---------------------------------------------------------------------------
 # Hand-authored skills — per-skill symlinks. The ~/.claude/skills parent also
 # holds third-party symlinks, so it must NOT be replaced wholesale.
 # ---------------------------------------------------------------------------

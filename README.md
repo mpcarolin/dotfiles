@@ -37,8 +37,23 @@ git submodule update --init --recursive
 | `claude/statusline.sh`      | `~/.config/claude/statusline.sh`        |
 | `claude/skills/<name>`      | `~/.claude/skills/<name>` (per-skill)   |
 
+| `swiftbar/<name>/<script>`  | SwiftBar plugin folder (per-plugin)     |
+
 `~/.claude/skills/` is shared with third-party skills, so skills are linked one
 at a time — the parent directory is never replaced.
+
+## SwiftBar plugins
+
+`swiftbar/` holds [SwiftBar](https://github.com/swiftbar/SwiftBar) plugins,
+one folder per plugin. `install.sh` links each plugin's executable script into
+the folder SwiftBar is set to use
+(`defaults read com.ameba.SwiftBar PluginDirectory`), and skips this step when
+SwiftBar isn't configured.
+
+- `caffeinate/caffeinate.30s.sh` keeps the Mac awake with `/usr/bin/caffeinate -di`. Use
+  it to turn caffeinate on with no end time, turn it off, or run it for
+  15m–8h. While a timed session runs, the menu bar shows the time left. It
+  only ever stops the caffeinate it started.
 
 ## Updating dotfiles
 
