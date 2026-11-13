@@ -132,16 +132,16 @@ else
   mkdir -p "$HOME/.agents/skills" "$HOME/.claude/skills"
   while IFS= read -r line; do
     # strip comments / blanks
-    id="${line%%#*}"
-    id="$(printf '%s' "$id" | tr -d '[:space:]')"
-    [ -n "$id" ] || continue
-    name="${id##*/}"
+    # "<source-id> [skill-name]"; skill-name defaults to the repo name.
+    read -r id skill _ <<<"${line%%#*}"
+    [ -n "${id:-}" ] || continue
+    name="${skill:-${id##*/}}"
     if [ -e "$HOME/.claude/skills/$name" ] || [ -e "$HOME/.agents/skills/$name" ]; then
       log "ok    $name already installed"
       continue
     fi
-    log "install $id"
-    npx -y skills add "$id" -g -y || warn "failed to install $id"
+    log "install $id ${skill:-}"
+    npx -y skills add "$id" -g -y ${skill:+--skill "$skill"} || warn "failed to install $id"
   done < "$MANIFEST"
 fi
 

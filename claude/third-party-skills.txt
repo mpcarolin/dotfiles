@@ -1,6 +1,7 @@
 # claude/third-party-skills.txt
-# Format: <source-id> — reinstalled via the skills CLI on a fresh machine.
+# Format: <source-id> [skill-name] — reinstalled via the skills CLI on a fresh machine.
 # Derived from ~/.agents/.skill-lock.json on the source machine.
 
 vercel-labs/agent-browser
-vercel-labs/skills
+vercel-labs/skills find-skills
+janestreet/agent_skills socratic-tutor
