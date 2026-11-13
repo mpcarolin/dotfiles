@@ -13,7 +13,30 @@ next_tab = "alt+shift+l"
 previous_tab = "alt+shift+h"
 next_workspace = "alt+shift+j"
 previous_workspace = "alt+shift+k"
+# Moved off prefix+e / prefix+o so herdr-nvim can use them (see below).
+edit_scrollback = "prefix+shift+e"
+open_notification_target = "prefix+f"
 
 [ui]
 sidebar_collapsed_mode = "hidden"  # default is "compact"
 hide_tab_bar_when_single_tab = true
+# herdr-auto-title (kryptamine/herdr-auto-title) names tabs itself; a name typed
+# at this prompt counts as manual and opts the tab out of auto-naming.
+prompt_new_tab_name = false
+
+# herdr-nvim (ChmaraX/herdr-nvim). These take over the default edit_scrollback
+# (prefix+e) and open_notification_target (prefix+o) keys, which are moved in [keys] above.
+[[keys.command]]
+key = "prefix+e"
+type = "plugin_action"
+command = "chmarax.herdr-nvim.toggle"
+description = "nvim sidebar"
+
+[[keys.command]]
+key = "prefix+o"
+type = "plugin_action"
+command = "chmarax.herdr-nvim.pick-file"
+description = "open file from agent output"
+
+[experimental]
+kitty_graphics = true
