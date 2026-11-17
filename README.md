@@ -31,6 +31,7 @@ git submodule update --init --recursive
 |-----------------------------|-----------------------------------------|
 | `tmux/`                     | `~/.config/tmux`                        |
 | `ghostty/`                  | `~/.config/ghostty`                     |
+| `rift/`                     | `~/.config/rift`                        |
 | `nvim/`                     | `~/.config/nvim`                        |
 | `claude/settings.json`      | `~/.claude/settings.json`               |
 | `claude/hooks/`             | `~/.claude/hooks`                       |

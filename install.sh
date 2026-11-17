@@ -58,11 +58,31 @@ fi
 log "ok    nvim submodule initialized"
 
 # ---------------------------------------------------------------------------
+# Homebrew packages the linked configs depend on.
+# ---------------------------------------------------------------------------
+info "Homebrew packages"
+if ! command -v brew >/dev/null 2>&1; then
+  warn "brew not found — skipping. Install Rift later with: brew install acsandmann/tap/rift"
+elif brew list --formula acsandmann/tap/rift >/dev/null 2>&1; then
+  log "ok    rift already installed"
+else
+  log "install rift"
+  brew install acsandmann/tap/rift
+  log "      to start it: \`rift service install && rift service start\`, allow Rift in"
+  log "      System Settings → Privacy & Security → Accessibility, then \`rift service restart\`"
+fi
+# Rift requires "Displays have separate Spaces" (on by default; spans-displays=1 means off).
+if [ "$(defaults read com.apple.spaces spans-displays 2>/dev/null)" = "1" ]; then
+  warn "Rift needs System Settings → Desktop & Dock → Mission Control → \"Displays have separate Spaces\" turned on (takes effect after logging out)"
+fi
+
+# ---------------------------------------------------------------------------
 # Whole-directory symlinks.
 # ---------------------------------------------------------------------------
 info "Linking config directories"
 link "$DOTFILES/tmux"    "$HOME/.config/tmux"
 link "$DOTFILES/ghostty" "$HOME/.config/ghostty"
+link "$DOTFILES/rift"    "$HOME/.config/rift"
 link "$DOTFILES/nvim"    "$HOME/.config/nvim"
 link "$DOTFILES/hammerspoon" "$HOME/.hammerspoon"
 link "$DOTFILES/claude/hooks" "$HOME/.claude/hooks"
