@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+"""Toggle the current workspace between the stack layout and its previous layout.
+
+Switching layouts makes rift rebuild the scrolling columns (widths and merged columns
+are lost), so the workspace is saved with save-layout before stacking and loaded back
+when leaving the stack. The save lives in TMPDIR, one per workspace.
+"""
+
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+RIFT_CLI = shutil.which("rift-cli") or next(
+    p for p in ("/opt/homebrew/bin/rift-cli", "/usr/local/bin/rift-cli") if os.path.exists(p)
+)
+STATE_DIR = Path(os.environ.get("TMPDIR", "/tmp"))
+
+
+def rift(*args):
+    return subprocess.run([RIFT_CLI, *args], check=True, capture_output=True, text=True).stdout
+
+
+def main():
+    layout = json.loads(rift("query", "layout"))
+    workspace = str(layout["workspace_id"])
+    state = STATE_DIR / f"rift-stack-{workspace}.json"
+    saved = STATE_DIR / f"rift-stack-{workspace}.ron"
+
+    if layout["mode"] != "stack":
+        rift("execute", "save-layout", str(saved))
+        state.write_text(json.dumps({"mode": layout["mode"]}))
+        rift("execute", "workspace", "set-layout", "--workspace-id", workspace, "stack")
+        return
+
+    mode = json.loads(state.read_text())["mode"] if state.exists() else "scrolling"
+    focused = layout.get("selected_window") or layout.get("focused_window")
+    rift("execute", "workspace", "set-layout", "--workspace-id", workspace, mode)
+    if saved.exists():
+        rift("execute", "load-layout", "--scope", "workspace", str(saved))
+        if focused:
+            rift("execute", "window", "focus", f"--window-id={json.dumps(focused)}")
+    state.unlink(missing_ok=True)
+    saved.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    main()

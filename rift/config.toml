@@ -552,6 +552,10 @@ comb1 = "Alt + Shift"
 "Alt + W" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/pair-columns\" 0.65"] }
 # undo: both columns back to the default 80% width (column_width_ratio)
 "Alt + Shift + W" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/pair-columns\" 0.8 0.8"] }
+# this workspace: stack layout (one window, the rest as tabs); again for the saved previous layout
+"Alt + S" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/toggle-stack\""] }
+# all workspaces: wide side gaps, so windows sit in the middle 65% of the screen; again to undo
+"Alt + C" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/toggle-gaps\" 0.65"] }
 "Alt + Comma" = "toggle_stack"
 "Alt + Slash" = "toggle_orientation"
 "Alt + Shift + E" = "unjoin_windows"  # moved off Alt+Ctrl+E (Hammerspoon Outlook hotkey)

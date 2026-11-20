@@ -1,0 +1,49 @@
+#!/usr/bin/python3
+"""Toggle wide left and right outer gaps, so windows sit in the middle RATIO of the screen.
+
+Usage: toggle-gaps [RATIO]   RATIO defaults to 0.65
+
+Outer gaps are global: the wide gaps apply to every workspace until toggled off. The
+normal gaps are saved in TMPDIR while the wide ones are on.
+"""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+RIFT_CLI = shutil.which("rift-cli") or next(
+    p for p in ("/opt/homebrew/bin/rift-cli", "/usr/local/bin/rift-cli") if os.path.exists(p)
+)
+STATE = Path(os.environ.get("TMPDIR", "/tmp")) / "rift-wide-gaps.json"
+
+
+def rift(*args):
+    return subprocess.run([RIFT_CLI, *args], check=True, capture_output=True, text=True).stdout
+
+
+def set_outer_gaps(gaps):
+    rift("execute", "config", "set-outer-gaps", *(str(gaps[k]) for k in ("top", "left", "bottom", "right")))
+
+
+def main():
+    ratio = float(sys.argv[1]) if len(sys.argv) > 1 else 0.65
+    gaps = json.loads(rift("execute", "config", "get"))["settings"]["layout"]["gaps"]["outer"]
+    normal = json.loads(STATE.read_text()) if STATE.exists() else None
+
+    # A save that matches the current gaps is stale (rift restarted while the gaps were wide).
+    if normal and normal != gaps:
+        set_outer_gaps(normal)
+        STATE.unlink()
+        return
+
+    display = next(d for d in json.loads(rift("query", "displays")) if d.get("is_active_context"))
+    side = round(display["frame"]["size"]["width"] * (1 - ratio) / 2)
+    STATE.write_text(json.dumps(gaps))
+    set_outer_gaps({**gaps, "left": side, "right": side})
+
+
+if __name__ == "__main__":
+    main()
