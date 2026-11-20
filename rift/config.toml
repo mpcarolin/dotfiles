@@ -548,6 +548,10 @@ comb1 = "Alt + Shift"
 # scrolling layout (niri-style): pull the neighboring column into this one (stacking), or push a stacked window out
 "Alt + BracketLeft" = { consume_or_expel_window = "left" }
 "Alt + BracketRight" = { consume_or_expel_window = "right" }
+# scrolling: size the focused column and the one to its right to 65% / 35% so both fit on screen
+"Alt + W" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/pair-columns\" 0.65"] }
+# undo: both columns back to the default 80% width (column_width_ratio)
+"Alt + Shift + W" = { exec = ["/bin/sh", "-c", "exec \"$HOME/.config/rift/scripts/pair-columns\" 0.8 0.8"] }
 "Alt + Comma" = "toggle_stack"
 "Alt + Slash" = "toggle_orientation"
 "Alt + Shift + E" = "unjoin_windows"  # moved off Alt+Ctrl+E (Hammerspoon Outlook hotkey)

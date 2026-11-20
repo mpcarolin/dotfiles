@@ -1,0 +1,110 @@
+#!/usr/bin/python3
+"""Scrolling layout: size the focused column and its right neighbour so both fit on screen.
+
+Usage: pair-columns [LEFT_RATIO [RIGHT_RATIO]]
+  LEFT_RATIO defaults to 0.65; RIGHT_RATIO defaults to the rest of the screen.
+  `pair-columns 0.8 0.8` puts both columns back to the default width.
+
+rift has no "set column width" command, only resize-by, which adds to the column's
+current share of the tiling area. So read the real widths from `rift-cli query layout`
+and resize each column by the exact difference.
+
+A maximized window ignores resize-by and reports a full-screen frame, so any maximized
+window in the pair is un-maximized first.
+"""
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+RIFT_CLI = shutil.which("rift-cli") or next(
+    p for p in ("/opt/homebrew/bin/rift-cli", "/usr/local/bin/rift-cli") if os.path.exists(p)
+)
+
+MAXIMIZE_TOGGLES = {
+    "is_fullscreen": "toggle-fullscreen",
+    "is_fullscreen_within_gaps": "toggle-fullscreen-within-gaps",
+}
+
+
+def rift(*args):
+    return subprocess.run([RIFT_CLI, *args], check=True, capture_output=True, text=True).stdout
+
+
+def window_nodes(node):
+    if node.get("window_id"):
+        yield node
+    for child in node.get("children", []):
+        yield from window_nodes(child)
+
+
+def focus(window_id):
+    rift("execute", "window", "focus", f"--window-id={json.dumps(window_id)}")
+
+
+def find_pair():
+    """Return (layout, focused window id, left column, right column), or None."""
+    layout = json.loads(rift("query", "layout"))
+    if layout.get("mode") != "scrolling":
+        return None
+
+    columns = [c for c in layout["container_tree"]["children"] if c.get("role") == "column"]
+    focused = layout.get("selected_window") or layout.get("focused_window")
+    index = next(
+        (i for i, c in enumerate(columns) if any(w["window_id"] == focused for w in window_nodes(c))),
+        None,
+    )
+    if index is None or index + 1 >= len(columns):
+        return None
+    return layout, focused, columns[index], columns[index + 1]
+
+
+def unmaximize(focused, columns):
+    """Un-maximize every maximized window in the columns; True if any were."""
+    maximized = [
+        (window, toggle)
+        for column in columns
+        for window in window_nodes(column)
+        for flag, toggle in MAXIMIZE_TOGGLES.items()
+        if window.get(flag)
+    ]
+    for window, toggle in maximized:
+        focus(window["window_id"])
+        rift("execute", "window", toggle)
+    if maximized:
+        focus(focused)
+    return bool(maximized)
+
+
+def main():
+    left_ratio = float(sys.argv[1]) if len(sys.argv) > 1 else 0.65
+    right_ratio = float(sys.argv[2]) if len(sys.argv) > 2 else 1 - left_ratio
+
+    pair = find_pair()
+    if pair is None:
+        return
+    _, focused, left_column, right_column = pair
+    if unmaximize(focused, (left_column, right_column)):
+        pair = find_pair()
+        if pair is None:
+            return
+
+    layout, _, left_column, right_column = pair
+    left, right = left_column["frame"], right_column["frame"]
+    view = layout["container_tree"]["frame"]["size"]["width"]
+    gap = right["origin"]["x"] - (left["origin"]["x"] + left["size"]["width"])
+
+    # rift's column share: (width + gap) / (view + gap)
+    def share(frame):
+        return (frame["size"]["width"] + gap) / (view + gap)
+
+    rift("execute", "window", "resize-by", f"--amount={left_ratio - share(left)}")
+    rift("execute", "window", "focus", "right")
+    rift("execute", "window", "resize-by", f"--amount={right_ratio - share(right)}")
+    rift("execute", "window", "focus", "left")
+
+
+if __name__ == "__main__":
+    main()
