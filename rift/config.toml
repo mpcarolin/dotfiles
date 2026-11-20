@@ -8,9 +8,9 @@
 # - animation_fps: frames per second (must be > 0; 0.0 is rejected despite older docs). 60–120 recommended.
 #   ease_in_circ, ease_out_circ, ease_in_out_circ
 animate = true
-animation_duration = 0.36
-animation_fps = 100.0
-animation_easing = "ease_in_out_sine"
+animation_duration = 0.2  # short: rift snaps window size at the halfway point, so less time showing the old size
+animation_fps = 60.0  # match the display refresh rate; a mismatch causes judder
+animation_easing = "ease_out_cubic"
 
 # Space activation behavior
 # - If true, spaces start inactive (rift does not manage windows there)
@@ -119,7 +119,7 @@ new_window_placement = "master"
 # these settings only apply when layout mode == "scrolling"
 [settings.layout.scrolling]
 # width of the active column (0..1 of screen width)
-column_width_ratio = 1.0
+column_width_ratio = 0.8
 # Keep each window's current width when it enters scrolling layout (default: true).
 # Widths outside the min/max column bounds are clamped.
 preserve_window_sizes = false
@@ -142,7 +142,7 @@ alignment = "center"
 # - "niri": reveal columns only when needed based on navigation direction
 # 			(disrespects alignment setting above)
 # - "anchored": always align focused column according to `alignment`
-focus_navigation_style = "anchored"
+focus_navigation_style = "niri"
 
 [settings.layout.scrolling.gestures]
 # Enable horizontal scroll gestures to switch columns
@@ -161,7 +161,7 @@ propagate_to_workspace_swipe = false
 # How much of each stacked window sticks out (in pixels)
 # Set to 0.0 to have them directly on top of each other.
 # Recommended: 30-50 for clear edges while keeping focus visible.
-stack_offset = 40.0
+stack_offset = 0.0  # 0 = visible window fills the stack; the stack_line tabs show the rest
 
 # Default stacking orientation when creating a new stack.
 # Options:
@@ -180,14 +180,14 @@ default_orientation = "perpendicular"
 #   Use the display's UUID as the key (for example, from system profiler or via rift CLI).
 
 [settings.layout.gaps.outer]
-top = 8
-left = 8
-bottom = 8
-right = 8
+top = 0
+left = 10
+bottom = 10
+right = 10
 
 [settings.layout.gaps.inner]
-horizontal = 8
-vertical = 8
+horizontal = 10
+vertical = 10
 
 # Example per-display overrides:
 # Replace the quoted key with your display's UUID. Only specify values you want to override.
@@ -244,9 +244,9 @@ horiz_placement = "top"
 # in a vertical stack where the tabs will be (left/right)
 vert_placement = "left"
 # how thick the tab bar will be (in points, at least 20)
-thickness = 28.0
+thickness = 21.0
 # spacing between the tab bar and window edges (in points)
-spacing = 0.0
+spacing = 8.0
 
 # Trackpad gestures
 [settings.gestures]
