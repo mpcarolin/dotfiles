@@ -229,7 +229,7 @@ active_label = "index"
 # options are "layout" or "label" (i3-style)
 display_style = "label"
 # when display_style = "label", add brackets (e.g. "[2]") when a window is in fullscreen
-show_fullscreen_indicator = false
+show_fullscreen_indicator = true
 # .ron files in this folder appear under Layout Files in the menu bar
 layout_folder = "~/.config/rift/layouts"
 
