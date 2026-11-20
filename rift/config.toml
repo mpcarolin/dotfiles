@@ -309,7 +309,7 @@ mode = "per_display"
 #   workspace instead of wrapping around
 # - reapply_app_rules_on_title_change: if true, app rules are re-evaluated when a window's title changes
 enabled = true
-default_workspace_count = 2
+default_workspace_count = 3
 auto_assign_windows = true
 preserve_focus_per_workspace = true
 workspace_auto_back_and_forth = false
@@ -334,6 +334,7 @@ reapply_app_rules_on_title_change = false
 workspace_rules = [
 	{ workspace = 0, layout = "scrolling" },
 	{ workspace = 1, layout = "bsp" },
+	{ workspace = 2, layout = "scrolling" },
 ]
 
 
@@ -347,7 +348,8 @@ workspace_rules = [
 # Do not provide more names than default_workspace_count.
 workspace_names = [
 	"first",
-	"second"
+	"second",
+	"third",
 ]
 
 # App rules (automatic assignment)
@@ -522,12 +524,14 @@ comb1 = "Alt + Shift"
 
 "Alt + 1" = { switch_to_workspace = 0 }
 "Alt + 2" = { switch_to_workspace = 1 }
+"Alt + 3" = { switch_to_workspace = 2 }
 
 "Alt + N" = "next_workspace"
 "Alt + P" = "prev_workspace"
 
 "comb1 + 1" = { move_window_to_workspace = 0 }
 "comb1 + 2" = { move_window_to_workspace = 1 }
+"comb1 + 3" = { move_window_to_workspace = 2 }
 
 "Alt + Tab" = "switch_to_last_workspace"
 
