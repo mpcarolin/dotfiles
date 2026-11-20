@@ -9,10 +9,11 @@ name = "terminal"
 auto_switch = false
 
 [keys]
-next_tab = "alt+shift+l"
-previous_tab = "alt+shift+h"
-next_workspace = "alt+shift+j"
-previous_workspace = "alt+shift+k"
+# ctrl+alt: alt+shift+h/j/k/l belong to rift (move_node); ctrl+alt is free in rift, Hammerspoon, and Ghostty
+next_tab = "ctrl+alt+l"
+previous_tab = "ctrl+alt+h"
+next_workspace = "ctrl+alt+j"
+previous_workspace = "ctrl+alt+k"
 # Moved off prefix+e / prefix+o so herdr-nvim can use them (see below).
 edit_scrollback = "prefix+shift+e"
 open_notification_target = "prefix+f"
